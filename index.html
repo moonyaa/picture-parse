@@ -1,776 +1,779 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
-    <title>批量拼图工坊 · 自由拼板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多规格批量图片拼接工具（序号自定义）</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
         }
-
         body {
-            background: #eef2f7;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
-            padding: 24px;
-            color: #1e293b;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .app {
-            max-width: 1600px;
-            width: 100%;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 28px;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-            display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 28px;
-            border: 1px solid rgba(255,255,255,0.6);
-        }
-
-        /* 左侧控制区 */
-        .control-panel {
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(4px);
-            border-radius: 32px;
-            padding: 24px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.02);
-            border: 1px solid #fff;
-        }
-
-        .control-panel h2 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(145deg, #1e3b5a, #2c4e6e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-            border-bottom: 2px solid rgba(60, 100, 140, 0.2);
-            padding-bottom: 10px;
-        }
-
-        .upload-area {
-            background: #f0f6fc;
-            border: 2px dashed #9bb7d4;
-            border-radius: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
             padding: 20px;
+            background-color: #f1f1f1;
+        }
+        .container {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
             text-align: center;
-            transition: 0.2s;
-            margin-bottom: 16px;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
         }
-
-        .upload-area:hover {
-            border-color: #2e5a7f;
-            background: #e3edf5;
-        }
-
-        .upload-btn {
-            background: #26547c;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 600;
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 25px;
             cursor: pointer;
-            box-shadow: 0 6px 12px rgba(38,84,124,0.2);
-            transition: 0.15s;
-            display: inline-block;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
         }
-
-        .upload-btn:hover {
-            background: #1a405c;
-            transform: scale(0.97);
+        .upload-area:hover {
+            border-color: #1677ff;
+            background-color: #f5faff;
         }
-
+        .upload-area.active {
+            border-color: #1677ff;
+            background-color: #f5faff;
+        }
         #fileInput {
             display: none;
         }
-
-        .thumb-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-top: 10px;
-            margin-bottom: 12px;
+        .upload-tip {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 10px;
         }
-
-        .badge {
-            background: #26547c;
-            color: white;
-            padding: 6px 18px;
-            border-radius: 60px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .upload-subtip {
+            color: #999;
+            font-size: 14px;
+            line-height: 1.5;
         }
-
-        #clearAllBtn {
-            background: transparent;
-            border: 1.8px solid #b44;
-            color: #b44;
-            padding: 6px 16px;
-            border-radius: 60px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        #clearAllBtn:hover {
-            background: #b44;
-            color: white;
-        }
-
-        .thumb-list {
+        /* 扩展配置栏：多规格+字体/颜色/大小 */
+        .setting-bar {
+            background-color: #f8f8f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding: 10px 6px;
-            background: rgba(255,255,255,0.4);
-            border-radius: 20px;
-            margin-bottom: 16px;
-        }
-
-        .thumb-item {
-            position: relative;
-            width: 68px;
-            height: 68px;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            flex-shrink: 0;
-        }
-
-        .thumb-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .remove-btn {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            border: 1px solid white;
-        }
-
-        .remove-btn:hover {
-            background: #c33;
-        }
-
-        .param-group {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-top: 10px;
-        }
-
-        .param-row {
-            display: flex;
+            gap: 15px 20px;
             align-items: center;
             justify-content: space-between;
         }
-
-        .param-row label {
-            font-weight: 600;
-            color: #1f4662;
-            font-size: 0.96rem;
-        }
-
-        .param-row input,
-        .param-row select {
-            width: 100px;
-            padding: 8px 12px;
-            border-radius: 30px;
-            border: 1.5px solid #cbdae5;
-            background: white;
-            font-weight: 500;
-            text-align: center;
-            outline: none;
-            transition: 0.15s;
-        }
-
-        .param-row input:focus,
-        .param-row select:focus {
-            border-color: #26547c;
-            box-shadow: 0 0 0 3px rgba(38,84,124,0.1);
-        }
-
-        .corner-box {
-            background: #e3ecf2;
-            border-radius: 24px;
-            padding: 18px;
-            margin-top: 16px;
-        }
-
-        .corner-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .corner-grid label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-            color: #1f3f55;
-        }
-
-        .generate-btn {
-            background: #1e6f3c;
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 60px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-top: 28px;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 10px 20px rgba(30,111,60,0.3);
-            letter-spacing: 1px;
-        }
-
-        .generate-btn:hover {
-            background: #155a2e;
-            transform: translateY(-2px);
-            box-shadow: 0 16px 24px rgba(30,111,60,0.4);
-        }
-
-        /* 右侧结果区 */
-        .result-panel {
-            background: rgba(255,255,255,0.6);
-            backdrop-filter: blur(4px);
-            border-radius: 32px;
-            padding: 24px;
-            border: 1px solid rgba(255,255,255,0.8);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .result-panel h3 {
-            font-size: 1.7rem;
-            font-weight: 650;
-            color: #1f4662;
-            margin-bottom: 18px;
+        .setting-item {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
-        .collage-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            overflow-y: auto;
-            max-height: 80vh;
-            padding: 6px 4px;
-            justify-content: flex-start;
-            align-content: flex-start;
+        .setting-item label {
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+            white-space: nowrap;
         }
-
-        .collage-card {
-            background: white;
-            border-radius: 28px;
-            padding: 20px 20px 18px;
-            box-shadow: 0 12px 26px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: 1px solid rgba(255,255,255,0.7);
+        .setting-item input[type="text"],
+        .setting-item select {
+            width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #dcdcdc;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
         }
-
-        .collage-card canvas {
-            max-width: 100%;
-            height: auto;
-            border-radius: 20px;
-            border: 2px solid #fff;
-            background: #d0dfec;
+        .setting-item input[type="text"]:focus,
+        .setting-item select:focus {
+            border-color: #1677ff;
         }
-
-        .download-btn {
-            margin-top: 16px;
-            background: #3a6e8c;
-            color: white;
-            border: none;
-            padding: 8px 28px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .setting-item input[type="range"] {
+            width: 150px;
             cursor: pointer;
-            border: 1px solid white;
-            transition: 0.15s;
         }
-
-        .download-btn:hover {
-            background: #27566f;
-            transform: scale(0.96);
+        .setting-item input[type="color"] {
+            width: 40px;
+            height: 36px;
+            border: 1px solid #dcdcdc;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
         }
-
-        .empty-tip {
-            color: #4f6f84;
-            font-size: 1.2rem;
-            background: rgba(255,255,255,0.7);
-            border-radius: 50px;
-            padding: 30px;
-            width: 100%;
+        .setting-item .num-size-tip {
+            color: #666;
+            font-size: 14px;
+            width: 60px;
+        }
+        .file-count {
+            font-size: 15px;
+            color: #666;
+            white-space: nowrap;
+        }
+        .ratio-tip {
+            font-size: 14px;
+            color: #1677ff;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .btn-group {
             text-align: center;
+            margin-bottom: 30px;
         }
-
-        @media (max-width: 1000px) {
-            .app {
-                grid-template-columns: 1fr;
+        .btn {
+            display: inline-block;
+            padding: 14px 36px;
+            background-color: #1677ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .btn:hover {
+            background-color: #0d66e8;
+        }
+        .btn:disabled {
+            background-color: #dcdcdc;
+            cursor: not-allowed;
+            color: #999;
+        }
+        .btn-clear {
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #dcdcdc;
+        }
+        .btn-clear:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        /* 双进度条 */
+        .progress-wrapper {
+            margin-bottom: 30px;
+            display: none;
+        }
+        .progress-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e5e5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #1677ff;
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        .result-area {
+            display: none;
+            margin-top: 20px;
+        }
+        .result-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .result-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .result-item {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .item-name {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .download-link {
+            display: inline-block;
+            color: #1677ff;
+            font-size: 14px;
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid #1677ff;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .download-link:hover {
+            background-color: #1677ff;
+            color: #fff;
+        }
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .upload-area {
+                padding: 40px 10px;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 14px;
+                margin: 0 5px 10px;
+            }
+            .setting-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .setting-item {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .setting-item input[type="range"] {
+                width: 120px;
             }
         }
+
+        /* 10款基础字体引入 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Arial+Nova:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Georgia:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Courier+New:wght@400;700&display=swap');
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- 左侧：参数与图片管理 -->
-        <div class="control-panel">
-            <h2>🧩 批量拼图</h2>
-            <div class="upload-area" id="uploadArea">
-                <button class="upload-btn" id="uploadBtn">📎 批量添加图片</button>
-                <input type="file" id="fileInput" multiple accept="image/*" />
-                <p style="margin-top: 10px; color: #2f5c77; font-size: 0.9rem;">点击或拖拽，支持多选</p>
-            </div>
-
-            <div class="thumb-header">
-                <span class="badge" id="imageCountDisplay">0 张图片</span>
-                <button id="clearAllBtn">🗑 一键清空</button>
-            </div>
-            <div id="thumbnailsList" class="thumb-list"></div>
-
-            <div class="param-group">
-                <div class="param-row">
-                    <label>🔢 行数</label>
-                    <input type="number" id="rowsInput" min="1" value="2" step="1">
-                </div>
-                <div class="param-row">
-                    <label>📊 列数</label>
-                    <input type="number" id="colsInput" min="1" value="3" step="1">
-                </div>
-                <div class="param-row">
-                    <label>🔖 起始序号</label>
-                    <input type="number" id="startNumInput" value="1" step="1">
-                </div>
-                <div class="param-row">
-                    <label>🔠 字体大小</label>
-                    <input type="number" id="fontSizeInput" min="8" max="72" value="18" step="1">
-                </div>
-                <div class="param-row">
-                    <label>📐 比例</label>
-                    <select id="ratioSelect">
-                        <option value="3:4" selected>3 : 4</option>
-                        <option value="9:16">9 : 16</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 四角标注控制 -->
-            <div class="corner-box">
-                <div style="font-weight: 700; margin-bottom: 8px; color: #1f4662;">📍 显示序号的角落</div>
-                <div class="corner-grid">
-                    <label><input type="checkbox" id="cornerTL" checked> 左上</label>
-                    <label><input type="checkbox" id="cornerTR"> 右上</label>
-                    <label><input type="checkbox" id="cornerBL"> 左下</label>
-                    <label><input type="checkbox" id="cornerBR"> 右下</label>
-                </div>
-                <p style="font-size: 0.8rem; color: #4a6679; margin-top: 10px;">可多选，至少勾选一个位置</p>
-            </div>
-
-            <button class="generate-btn" id="generateBtn">⚡ 一次生成拼图</button>
+    <div class="container">
+        <h1>多规格批量图片拼接工具（序号自定义）</h1>
+        
+        <!-- 上传区域 -->
+        <div class="upload-area" id="uploadArea">
+            <p class="upload-tip">点击或拖拽图片到此处上传（支持一次性上传200张内）</p>
+            <p class="upload-subtip">支持JPG/PNG/BMP | 图片仅本地处理 | 非目标比例图不变形居中填充 | 所有图片100%显示</p>
+            <input type="file" id="fileInput" accept="image/*" multiple>
         </div>
-
-        <!-- 右侧：拼图结果展示区 -->
-        <div class="result-panel">
-            <h3>🖼️ 拼图输出</h3>
-            <div id="collageContainer" class="collage-container">
-                <div class="empty-tip">⬆ 上传图片，调整参数，点击生成</div>
+        
+        <!-- 扩展配置栏：多规格+序号+字体+颜色+大小 -->
+        <div class="setting-bar">
+            <div class="file-count" id="fileCount">已选择：0 张图片</div>
+            
+            <div class="setting-item">
+                <label for="startNum">初始序号：</label>
+                <input type="text" id="startNum" value="1" placeholder="正整数">
             </div>
+
+            <div class="setting-item">
+                <label for="targetRatio">拼图规格：</label>
+                <select id="targetRatio">
+                    <option value="9:16">9:16</option>
+                    <option value="16:9">16:9</option>
+                    <option value="3:4">3:4</option>
+                    <option value="4:3">4:3</option>
+                    <option value="1:1">1:1</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label for="fontFamily">数字字体：</label>
+                <select id="fontFamily">
+                    <option value="Microsoft YaHei, Arial">微软雅黑</option>
+                    <option value="SimSun, serif">宋体</option>
+                    <option value="SimHei, sans-serif">黑体</option>
+                    <option value="Noto Sans SC, sans-serif">思源黑体</option>
+                    <option value="Roboto, sans-serif">Roboto</option>
+                    <option value="Open Sans, sans-serif">Open Sans</option>
+                    <option value="Montserrat, sans-serif">Montserrat</option>
+                    <option value="Lato, sans-serif">Lato</option>
+                    <option value="Poppins, sans-serif">Poppins</option>
+                    <option value="Arial Nova, sans-serif">Arial Nova</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Times New Roman, serif">Times New Roman</option>
+                    <option value="Courier New, monospace">Courier New</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label for="fontWeight">字体粗细：</label>
+                <select id="fontWeight">
+                    <option value="100">极细</option>
+                    <option value="300">细体</option>
+                    <option value="400" selected>常规</option>
+                    <option value="600">半粗</option>
+                    <option value="700">粗体</option>
+                    <option value="900">极粗</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label for="fontColor">字体颜色：</label>
+                <input type="color" id="fontColor" value="#ffffff">
+            </div>
+
+            <div class="setting-item">
+                <label for="strokeColor">描边颜色：</label>
+                <input type="color" id="strokeColor" value="#000000">
+            </div>
+
+            <div class="setting-item">
+                <label for="numSize">数字大小：</label>
+                <input type="range" id="numSize" min="0" max="30" step="0.5" value="12">
+                <span class="num-size-tip" id="numSizeTip">12.0%</span>
+            </div>
+            
+            <div class="ratio-tip">3×3网格 | 中间偏下序号 | 9张一组 | 所有图片加载完成后绘制</div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="btn-group">
+            <button class="btn" id="combineBtn" disabled>开始批量拼接</button>
+            <button class="btn btn-clear" id="clearBtn">清空已选图片</button>
+        </div>
+        
+        <!-- 双进度条 -->
+        <div class="progress-wrapper" id="progressWrapper">
+            <div class="progress-title">1. 图片加载+序号处理进度：</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="processProgressBar"></div>
+            </div>
+            <div class="progress-title" style="margin-top: 10px;">2. 拼图绘制进度：</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="combineProgressBar"></div>
+            </div>
+        </div>
+        
+        <!-- 拼接结果 -->
+        <div class="result-area" id="resultArea">
+            <h3 class="result-title">拼接结果（点击下载）：</h3>
+            <div class="result-list" id="resultList"></div>
         </div>
     </div>
 
     <script>
-        (function(){
-            'use strict';
-
-            // ---------- 全局存储 ----------
-            const images = []; // { id, url, imgElement }
-
-            // DOM 元素
-            const fileInput = document.getElementById('fileInput');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const uploadArea = document.getElementById('uploadArea');
-            const clearAllBtn = document.getElementById('clearAllBtn');
-            const thumbnailsList = document.getElementById('thumbnailsList');
-            const imageCountDisplay = document.getElementById('imageCountDisplay');
-            const rowsInput = document.getElementById('rowsInput');
-            const colsInput = document.getElementById('colsInput');
-            const startNumInput = document.getElementById('startNumInput');
-            const fontSizeInput = document.getElementById('fontSizeInput');
-            const ratioSelect = document.getElementById('ratioSelect');
-            const cornerTL = document.getElementById('cornerTL');
-            const cornerTR = document.getElementById('cornerTR');
-            const cornerBL = document.getElementById('cornerBL');
-            const cornerBR = document.getElementById('cornerBR');
-            const generateBtn = document.getElementById('generateBtn');
-            const collageContainer = document.getElementById('collageContainer');
-
-            // 固定单元格宽度 (px)
-            const CELL_WIDTH = 160;
-
-            // ---------- 工具函数：定义 roundRect (确保可用) ----------
-            if (!CanvasRenderingContext2D.prototype.roundRect) {
-                CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-                    if (w < 2 * r) r = w / 2;
-                    if (h < 2 * r) r = h / 2;
-                    this.moveTo(x + r, y);
-                    this.lineTo(x + w - r, y);
-                    this.quadraticCurveTo(x + w, y, x + w, y + r);
-                    this.lineTo(x + w, y + h - r);
-                    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-                    this.lineTo(x + r, y + h);
-                    this.quadraticCurveTo(x, y + h, x, y + h - r);
-                    this.lineTo(x, y + r);
-                    this.quadraticCurveTo(x, y, x + r, y);
-                    return this;
-                };
+        // 核心配置
+        const CONFIG = {
+            GROUP_NUM: 9,
+            MAX_UPLOAD: 200,
+            BASE_W: 900,
+            BG_COLOR: '#ffffff',
+            STROKE_RATIO: 0.03,
+            NUM_POS_Y: 0.85,
+            // 多规格比例配置
+            RATIO_CONFIG: {
+                '3:4': {w: 3, h: 4},
+                '4:3': {w: 4, h: 3},
+                '16:9': {w: 16, h: 9},
+                '9:16': {w: 9, h: 16},
+                '1:1': {w: 1, h: 1}
             }
+        };
 
-            // ---------- 渲染缩略图 ----------
-            function renderThumbnails() {
-                imageCountDisplay.innerText = images.length + ' 张图片';
-                if (images.length === 0) {
-                    thumbnailsList.innerHTML = '<div style="width:100%; padding:16px; text-align:center; color:#607d8b;">📭 暂无图片</div>';
-                    return;
-                }
-                let html = '';
-                images.forEach((imgObj, idx) => {
-                    html += `<div class="thumb-item">
-                                <img src="${imgObj.url}" alt="thumb" loading="lazy">
-                                <span class="remove-btn" data-index="${idx}">✕</span>
-                            </div>`;
-                });
-                thumbnailsList.innerHTML = html;
+        // 全局变量
+        let selectedFiles = [];
+        let processedImages = [];
+        let ratioConfig = CONFIG.RATIO_CONFIG['9:16']; // 默认9:16
+        
+        // 页面元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileCount = document.getElementById('fileCount');
+        const startNumInput = document.getElementById('startNum');
+        const targetRatioSelect = document.getElementById('targetRatio');
+        const fontFamilySelect = document.getElementById('fontFamily');
+        const fontWeightSelect = document.getElementById('fontWeight');
+        const fontColorInput = document.getElementById('fontColor');
+        const strokeColorInput = document.getElementById('strokeColor');
+        const numSizeSlider = document.getElementById('numSize');
+        const numSizeTip = document.getElementById('numSizeTip');
+        const combineBtn = document.getElementById('combineBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressWrapper = document.getElementById('progressWrapper');
+        const processProgressBar = document.getElementById('processProgressBar');
+        const combineProgressBar = document.getElementById('combineProgressBar');
+        const resultArea = document.getElementById('resultArea');
+        const resultList = document.getElementById('resultList');
 
-                // 绑定删除按钮
-                document.querySelectorAll('.thumb-item .remove-btn').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const index = parseInt(this.dataset.index, 10);
-                        removeImageAtIndex(index);
-                    });
-                });
-            }
-
-            // ---------- 删除单张图片 ----------
-            function removeImageAtIndex(index) {
-                if (index >= 0 && index < images.length) {
-                    URL.revokeObjectURL(images[index].url);
-                    images.splice(index, 1);
-                    renderThumbnails();
-                    clearCollageContainer(); // 图片变动，清空拼图
-                }
-            }
-
-            // ---------- 一键清空 ----------
-            function clearAllImages() {
-                images.forEach(img => URL.revokeObjectURL(img.url));
-                images.length = 0;
-                renderThumbnails();
-                clearCollageContainer();
-            }
-
-            // ---------- 清空拼图显示 ----------
-            function clearCollageContainer() {
-                collageContainer.innerHTML = '<div class="empty-tip">⬆ 上传图片，调整参数，点击生成</div>';
-            }
-
-            // ---------- 批量添加图片 ----------
-            function addImagesFromFiles(files) {
-                if (!files || files.length === 0) return;
-                for (const file of files) {
-                    if (!file.type.startsWith('image/')) continue;
-                    const url = URL.createObjectURL(file);
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => {
-                        images.push({
-                            id: Date.now() + Math.random() + file.name,
-                            url: url,
-                            imgElement: img,
-                            fileName: file.name
-                        });
-                        renderThumbnails();
-                    };
-                    img.onerror = () => {
-                        URL.revokeObjectURL(url);
-                        console.warn('图片加载失败:', file.name);
-                    };
-                }
-            }
-
-            // ---------- 事件绑定：上传 ----------
-            uploadBtn.addEventListener('click', () => fileInput.click());
+        // 初始化
+        function init() {
+            // 1. 拖拽上传
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                uploadArea.style.borderColor = '#26547c';
-                uploadArea.style.background = '#deeaf3';
+                uploadArea.classList.add('active');
             });
-            uploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#9bb7d4';
-                uploadArea.style.background = '#f0f6fc';
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('active');
             });
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                uploadArea.style.borderColor = '#9bb7d4';
-                uploadArea.style.background = '#f0f6fc';
-                addImagesFromFiles(e.dataTransfer.files);
-            });
-            fileInput.addEventListener('change', (e) => {
-                addImagesFromFiles(e.target.files);
-                fileInput.value = ''; // 允许再次选择相同文件
+                uploadArea.classList.remove('active');
+                e.dataTransfer.files.length && handleFiles(e.dataTransfer.files);
             });
 
-            // 一键清空
-            clearAllBtn.addEventListener('click', clearAllImages);
+            // 2. 点击上传
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
 
-            // ---------- 核心：生成拼图 ----------
-            function generateCollages() {
-                if (images.length === 0) {
-                    alert('请先添加图片！');
-                    return;
-                }
+            // 3. 数字大小滑块
+            numSizeSlider.addEventListener('input', () => {
+                numSizeTip.textContent = `${numSizeSlider.value}%`;
+            });
 
-                // 读取参数
-                let rows = parseInt(rowsInput.value, 10);
-                let cols = parseInt(colsInput.value, 10);
-                if (isNaN(rows) || rows < 1) rows = 2;
-                if (isNaN(cols) || cols < 1) cols = 3;
-                let startNum = parseInt(startNumInput.value, 10);
-                if (isNaN(startNum)) startNum = 1;
-                let fontSize = parseInt(fontSizeInput.value, 10);
-                if (isNaN(fontSize) || fontSize < 6) fontSize = 18;
-                const ratio = ratioSelect.value; // '3:4' 或 '9:16'
+            // 4. 拼图规格切换
+            targetRatioSelect.addEventListener('change', () => {
+                ratioConfig = CONFIG.RATIO_CONFIG[targetRatioSelect.value];
+            });
 
-                // 角落复选框：如果全未选，强制勾选左上并重新获取状态
-                let showTL = cornerTL.checked;
-                let showTR = cornerTR.checked;
-                let showBL = cornerBL.checked;
-                let showBR = cornerBR.checked;
-                if (!showTL && !showTR && !showBL && !showBR) {
-                    alert('至少选择一个角落显示序号，已自动勾选「左上」');
-                    cornerTL.checked = true;
-                    showTL = true;
-                }
+            // 5. 按钮事件
+            combineBtn.addEventListener('click', startFullProcess);
+            clearBtn.addEventListener('click', clearAllFiles);
 
-                // 根据比例计算单元格高度
-                let cellHeight;
-                if (ratio === '3:4') {
-                    cellHeight = CELL_WIDTH * (4 / 3);
-                } else { // 9:16
-                    cellHeight = CELL_WIDTH * (16 / 9);
-                }
+            // 6. 初始数字校验
+            startNumInput.addEventListener('input', () => {
+                startNumInput.value = startNumInput.value.replace(/\D/g, '');
+                if (startNumInput.value === '') startNumInput.value = 1;
+            });
+        }
 
-                const pageSize = rows * cols;          // 每张拼图最多图片数
-                const totalImages = images.length;
-                const pageCount = Math.ceil(totalImages / pageSize);
-
-                // 清空并重新填充拼图
-                collageContainer.innerHTML = '';
-
-                if (pageCount === 0) {
-                    collageContainer.innerHTML = '<div class="empty-tip">🖼️ 无图片可拼</div>';
-                    return;
-                }
-
-                // 逐张拼图生成
-                for (let page = 0; page < pageCount; page++) {
-                    const startIdx = page * pageSize;
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const canvasWidth = cols * CELL_WIDTH;
-                    const canvasHeight = rows * cellHeight;
-                    canvas.width = canvasWidth;
-                    canvas.height = canvasHeight;
-
-                    // 白色背景
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-                    // 绘制每个格子
-                    for (let r = 0; r < rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            const imgIndex = startIdx + (r * cols + c);
-                            if (imgIndex >= totalImages) break;
-
-                            const imgObj = images[imgIndex];
-                            const img = imgObj.imgElement;
-                            if (!img) continue;
-
-                            const x = c * CELL_WIDTH;
-                            const y = r * cellHeight;
-
-                            // ---- 图片绘制：居中裁剪，填满格子 ----
-                            try {
-                                const imgW = img.naturalWidth || img.width;
-                                const imgH = img.naturalHeight || img.height;
-                                if (imgW > 0 && imgH > 0) {
-                                    const cellRatio = CELL_WIDTH / cellHeight;
-                                    const imgRatio = imgW / imgH;
-
-                                    let drawW, drawH, offsetX, offsetY;
-                                    if (imgRatio > cellRatio) {
-                                        // 图片更宽，以高度为基准，宽度裁剪
-                                        drawH = cellHeight;
-                                        drawW = imgW * (cellHeight / imgH);
-                                        offsetX = (CELL_WIDTH - drawW) / 2;
-                                        offsetY = 0;
-                                    } else {
-                                        // 图片更高，以宽度为基准，高度裁剪
-                                        drawW = CELL_WIDTH;
-                                        drawH = imgH * (CELL_WIDTH / imgW);
-                                        offsetX = 0;
-                                        offsetY = (cellHeight - drawH) / 2;
-                                    }
-                                    ctx.drawImage(img, x + offsetX, y + offsetY, drawW, drawH);
-                                }
-                            } catch (e) {
-                                console.warn('绘制图片失败', e);
-                            }
-
-                            // ---- 标注序号 (背景圆角标签) ----
-                            const seqNum = startNum + imgIndex;
-                            const text = String(seqNum);
-                            ctx.font = `bold ${fontSize}px 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif`;
-                            const textWidth = ctx.measureText(text).width;
-                            const textHeight = fontSize * 0.8; // 近似高度
-
-                            // 边距
-                            const margin = 8;
-                            // 绘制文字背景与文字的函数
-                            const drawNumber = (baseX, baseY, align = 'left') => {
-                                let boxX = baseX;
-                                if (align === 'right') boxX = baseX - textWidth;
-                                else if (align === 'center') boxX = baseX - textWidth / 2;
-
-                                ctx.save();
-                                // 半透黑底 + 阴影
-                                ctx.fillStyle = 'rgba(20, 25, 35, 0.8)';
-                                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                                ctx.shadowBlur = 5;
-                                ctx.shadowOffsetX = 1;
-                                ctx.shadowOffsetY = 1;
-                                ctx.beginPath();
-                                ctx.roundRect(boxX - margin/2, baseY - textHeight - margin/2, textWidth + margin, textHeight + margin, 8);
-                                ctx.fill();
-                                ctx.restore();
-
-                                // 白色文字
-                                ctx.save();
-                                ctx.fillStyle = '#ffffff';
-                                ctx.font = `bold ${fontSize}px 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif`;
-                                ctx.shadowColor = 'black';
-                                ctx.shadowBlur = 3;
-                                ctx.fillText(text, baseX, baseY);
-                                ctx.restore();
-                            };
-
-                            // 根据复选框绘制四个角落
-                            if (showTL) {
-                                drawNumber(x + margin, y + fontSize + margin, 'left');
-                            }
-                            if (showTR) {
-                                drawNumber(x + CELL_WIDTH - margin, y + fontSize + margin, 'right');
-                            }
-                            if (showBL) {
-                                drawNumber(x + margin, y + cellHeight - margin, 'left');
-                            }
-                            if (showBR) {
-                                drawNumber(x + CELL_WIDTH - margin, y + cellHeight - margin, 'right');
-                            }
-                        }
-                    }
-
-                    // 绘制细网格线，更精致
-                    ctx.save();
-                    ctx.strokeStyle = '#b8d0dd';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i <= rows; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, i * cellHeight);
-                        ctx.lineTo(canvasWidth, i * cellHeight);
-                        ctx.stroke();
-                    }
-                    for (let i = 0; i <= cols; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(i * CELL_WIDTH, 0);
-                        ctx.lineTo(i * CELL_WIDTH, canvasHeight);
-                        ctx.stroke();
-                    }
-                    ctx.restore();
-
-                    // ---- 将拼图卡片加入右侧 ----
-                    const card = document.createElement('div');
-                    card.className = 'collage-card';
-                    card.appendChild(canvas);
-
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.className = 'download-btn';
-                    downloadBtn.innerText = `⬇ 下载 拼图${page+1}`;
-                    downloadBtn.addEventListener('click', (function(canvas) {
-                        return function() {
-                            const link = document.createElement('a');
-                            link.download = `collage_${page+1}_${rows}x${cols}.png`;
-                            link.href = canvas.toDataURL('image/png');
-                            link.click();
-                        };
-                    })(canvas));
-                    card.appendChild(downloadBtn);
-                    collageContainer.appendChild(card);
-                }
+        // 处理上传文件（支持200张）
+        function handleFiles(files) {
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            if (imageFiles.length === 0) {
+                alert('请选择有效的图片文件（JPG/PNG/BMP）！');
+                return;
             }
 
-            // 生成拼图按钮
-            generateBtn.addEventListener('click', generateCollages);
+            const totalAfterAdd = selectedFiles.length + imageFiles.length;
+            if (totalAfterAdd > CONFIG.MAX_UPLOAD) {
+                const addCount = CONFIG.MAX_UPLOAD - selectedFiles.length;
+                selectedFiles = [...selectedFiles, ...imageFiles.slice(0, addCount)];
+                alert(`最多支持上传200张图片，已为你截取前${CONFIG.MAX_UPLOAD}张！`);
+            } else {
+                selectedFiles = [...selectedFiles, ...imageFiles];
+            }
 
-            // 初始渲染缩略图
-            renderThumbnails();
+            fileCount.textContent = `已选择：${selectedFiles.length} 张图片`;
+            combineBtn.disabled = selectedFiles.length === 0;
+        }
 
-            // 页面卸载时释放所有 blob url
-            window.addEventListener('beforeunload', function() {
-                images.forEach(img => URL.revokeObjectURL(img.url));
+        // 清空所有
+        function clearAllFiles() {
+            selectedFiles = [];
+            processedImages = [];
+            fileInput.value = '';
+            startNumInput.value = 1;
+            targetRatioSelect.value = '9:16';
+            fontFamilySelect.value = 'Microsoft YaHei, Arial';
+            fontWeightSelect.value = '400';
+            fontColorInput.value = '#ffffff';
+            strokeColorInput.value = '#000000';
+            numSizeSlider.value = 12;
+            numSizeTip.textContent = '12.0%';
+            fileCount.textContent = `已选择：0 张图片`;
+            combineBtn.disabled = true;
+            resultArea.style.display = 'none';
+            resultList.innerHTML = '';
+            progressWrapper.style.display = 'none';
+            processProgressBar.style.width = '0%';
+            combineProgressBar.style.width = '0%';
+            ratioConfig = CONFIG.RATIO_CONFIG['9:16'];
+        }
+
+        // 单张图片处理（不变形+序号自定义）
+        function processSingleImage(file, number) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        try {
+                            // 1. 目标比例适配计算（不变形）
+                            const targetRatio = ratioConfig.w / ratioConfig.h;
+                            const imgRatio = img.width / img.height;
+                            let drawW, drawH, offsetX = 0, offsetY = 0;
+
+                            if (imgRatio > targetRatio) {
+                                drawH = img.height;
+                                drawW = img.height * targetRatio;
+                                offsetX = (img.width - drawW) / 2;
+                            } else {
+                                drawW = img.width;
+                                drawH = img.width / targetRatio;
+                                offsetY = (img.height - drawH) / 2;
+                            }
+
+                            // 2. 计算基础尺寸（按比例）
+                            let baseW, baseH;
+                            if (ratioConfig.w > ratioConfig.h) {
+                                baseW = CONFIG.BASE_W;
+                                baseH = (CONFIG.BASE_W / ratioConfig.w) * ratioConfig.h;
+                            } else {
+                                baseH = (CONFIG.BASE_W / 9) * 16; // 保持基础高度一致
+                                baseW = (baseH / ratioConfig.h) * ratioConfig.w;
+                            }
+
+                            // 3. 创建画布
+                            const canvas = document.createElement('canvas');
+                            canvas.width = baseW;
+                            canvas.height = baseH;
+                            const ctx = canvas.getContext('2d');
+
+                            // 4. 填充背景
+                            ctx.fillStyle = CONFIG.BG_COLOR;
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                            // 5. 绘制原图（不变形居中）
+                            ctx.drawImage(
+                                img,
+                                offsetX, offsetY, drawW, drawH,
+                                0, 0, canvas.width, canvas.height
+                            );
+
+                            // 6. 自定义序号样式
+                            const numSizeRatio = parseFloat(numSizeSlider.value) / 100;
+                            const fontSize = baseH * numSizeRatio;
+                            const strokeWidth = fontSize * CONFIG.STROKE_RATIO;
+
+                            // 获取用户选择的样式
+                            const fontFamily = fontFamilySelect.value;
+                            const fontWeight = fontWeightSelect.value;
+                            const fontColor = fontColorInput.value;
+                            const strokeColor = strokeColorInput.value;
+
+                            // 设置序号样式
+                            ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillStyle = fontColor;
+                            ctx.strokeStyle = strokeColor;
+                            ctx.lineWidth = strokeWidth;
+
+                            // 序号位置（中间偏下）
+                            const x = canvas.width / 2;
+                            const y = canvas.height * CONFIG.NUM_POS_Y;
+                            const text = number.toString();
+
+                            // 绘制序号（描边+填充，醒目无背景）
+                            ctx.strokeText(text, x, y);
+                            ctx.fillText(text, x, y);
+
+                            // 7. 转换为Blob
+                            canvas.toBlob((blob) => {
+                                if (blob) {
+                                    resolve({
+                                        blob: blob,
+                                        width: canvas.width,
+                                        height: canvas.height,
+                                        number: number,
+                                        img: img // 保留原图引用，确保加载完成
+                                    });
+                                } else {
+                                    reject(new Error(`图片${file.name}转换失败`));
+                                }
+                            }, 'image/jpeg', 1.0);
+                        } catch (err) {
+                            reject(new Error(`图片${file.name}处理失败：${err.message}`));
+                        }
+                    };
+
+                    img.onerror = () => {
+                        reject(new Error(`图片${file.name}加载失败，请检查文件是否损坏`));
+                    };
+
+                    img.src = e.target.result;
+                };
+
+                reader.onerror = () => {
+                    reject(new Error(`文件${file.name}读取失败`));
+                };
+
+                reader.readAsDataURL(file);
             });
-        })();
+        }
+
+        // 批量处理所有图片（确保全部加载完成）
+        async function batchProcessImages(startNum) {
+            processedImages = [];
+            const total = selectedFiles.length;
+            
+            // 按顺序处理，确保所有图片加载完成
+            for (let i = 0; i < total; i++) {
+                try {
+                    const currentNum = startNum + i;
+                    const processedImg = await processSingleImage(selectedFiles[i], currentNum);
+                    processedImages.push(processedImg);
+                } catch (err) {
+                    console.warn(err.message);
+                    alert(err.message + '，已跳过该图片继续处理');
+                }
+                
+                // 更新进度
+                const progress = ((i + 1) / total) * 100;
+                processProgressBar.style.width = `${progress}%`;
+            }
+            
+            if (processedImages.length === 0) {
+                throw new Error('没有可拼接的有效图片');
+            }
+        }
+
+        // 拼接单组图片（9张完整加载后绘制）
+        function combineSingleGroup(groupImages, groupIdx, startNum, totalFiles) {
+            return new Promise((resolve) => {
+                // 等待组内所有图片加载完成
+                const loadPromises = groupImages.map(imgData => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.onload = () => resolve({img: img, data: imgData});
+                        img.onerror = () => resolve({img: null, data: imgData});
+                        img.src = URL.createObjectURL(imgData.blob);
+                    });
+                });
+
+                // 所有图片加载完成后统一绘制
+                Promise.all(loadPromises).then(loadedImages => {
+                    // 计算单张尺寸和拼图尺寸（3×3）
+                    const singleW = loadedImages[0]?.data.width || CONFIG.BASE_W / 3;
+                    const singleH = loadedImages[0]?.data.height || (CONFIG.BASE_W / 3) * (ratioConfig.h / ratioConfig.w);
+                    const combineW = singleW * 3;
+                    const combineH = singleH * 3;
+
+                    // 创建拼图画布
+                    const canvas = document.createElement('canvas');
+                    canvas.width = combineW;
+                    canvas.height = combineH;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = CONFIG.BG_COLOR;
+                    ctx.fillRect(0, 0, combineW, combineH);
+
+                    // 绘制9张图片（3×3网格，确保位置准确）
+                    loadedImages.forEach((item, idx) => {
+                        if (item.img) {
+                            const col = idx % 3;
+                            const row = Math.floor(idx / 3);
+                            const x = col * singleW;
+                            const y = row * singleH;
+                            ctx.drawImage(item.img, x, y, singleW, singleH);
+                        }
+                    });
+
+                    // 生成下载Blob
+                    canvas.toBlob((blob) => {
+                        const gStart = startNum + groupIdx * CONFIG.GROUP_NUM;
+                        const gEnd = Math.min(
+                            startNum + (groupIdx + 1) * CONFIG.GROUP_NUM - 1,
+                            startNum + totalFiles - 1
+                        );
+                        const fileName = `${targetRatioSelect.value}拼接组${groupIdx + 1}（${gStart}-${gEnd}号）.jpg`;
+                        resolve({
+                            fileName: fileName,
+                            downloadUrl: URL.createObjectURL(blob)
+                        });
+                    }, 'image/jpeg', 1.0);
+                });
+            });
+        }
+
+        // 批量拼接所有组
+        async function batchCombineImages(startNum) {
+            const totalProcessed = processedImages.length;
+            const groupCount = Math.ceil(totalProcessed / CONFIG.GROUP_NUM);
+            const results = [];
+
+            for (let groupIdx = 0; groupIdx < groupCount; groupIdx++) {
+                const start = groupIdx * CONFIG.GROUP_NUM;
+                const end = Math.min((groupIdx + 1) * CONFIG.GROUP_NUM, totalProcessed);
+                const groupImages = processedImages.slice(start, end);
+
+                // 拼接当前组
+                const groupResult = await combineSingleGroup(
+                    groupImages, 
+                    groupIdx, 
+                    startNum, 
+                    selectedFiles.length
+                );
+                results.push(groupResult);
+
+                // 更新进度
+                const progress = ((groupIdx + 1) / groupCount) * 100;
+                combineProgressBar.style.width = `${progress}%`;
+            }
+
+            return results;
+        }
+
+        // 主流程
+        async function startFullProcess() {
+            let startNum = parseInt(startNumInput.value) || 1;
+            startNum = Math.max(startNum, 1);
+            startNumInput.value = startNum;
+
+            // 重置结果区域
+            resultArea.style.display = 'none';
+            resultList.innerHTML = '';
+            progressWrapper.style.display = 'block';
+            processProgressBar.style.width = '0%';
+            combineProgressBar.style.width = '0%';
+            combineBtn.disabled = true;
+
+            try {
+                // 1. 批量处理所有图片（加序号）
+                await batchProcessImages(startNum);
+                
+                // 2. 批量拼接所有组（9张一组）
+                const results = await batchCombineImages(startNum);
+
+                // 3. 显示结果
+                resultArea.style.display = 'block';
+                results.forEach(res => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <p class="item-name">${res.fileName}</p>
+                        <a href="${res.downloadUrl}" download="${res.fileName}" class="download-link">点击下载</a>
+                    `;
+                    resultList.appendChild(item);
+                });
+
+                alert(`拼接完成！共处理${processedImages.length}张图片，生成${results.length}组${targetRatioSelect.value}拼图`);
+            } catch (err) {
+                alert(`拼接失败：${err.message}`);
+            } finally {
+                combineBtn.disabled = false;
+                // 5秒后隐藏进度条
+                setTimeout(() => {
+                    progressWrapper.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // 页面加载完成初始化
+        window.onload = init;
     </script>
 </body>
 </html>
